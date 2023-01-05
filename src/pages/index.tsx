@@ -1,9 +1,18 @@
 import { type NextPage } from "next";
+import { ErrorMessage } from "@hookform/error-message";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import Link from "next/link";
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { api } from "../utils/api";
+
+const FormValuesSchema = z.object({
+  answerContent: z.optional(z.string().max(100)),
+});
+
+type FormValues = z.infer<typeof FormValuesSchema>;
 
 const AnswerContent = () => {
   const { data: answercontents, isLoading } = api.answer.getAll.useQuery();
@@ -27,8 +36,12 @@ const AnswerContent = () => {
 };
 
 const Form = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>();
   const { data: session } = useSession();
-  const [answerContent, setAnswerContent] = useState("");
   const utils = api.useContext();
   const postAnswer = api.answer.postAnswer.useMutation({
     onSettled: () => {
@@ -39,28 +52,24 @@ const Form = () => {
   return (
     <form
       className="flex gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-
+      onSubmit={handleSubmit((input) => {
+        console.log("input2");
+        console.log(input);
         if (session !== null) {
           postAnswer.mutate({
             name: session.user?.name as string,
-            answerContent,
+            answerContent: input.answerContent as string,
           });
         }
-
-        setAnswerContent("");
-      }}
+      })}
     >
       <input
         type="text"
-        value={answerContent}
         placeholder="Your answerContent..."
-        minLength={2}
-        maxLength={100}
-        onChange={(event) => setAnswerContent(event.target.value)}
+        {...register("answerContent")}
         className="rounded-md border-2 border-zinc-800 bg-neutral-900 px-4 py-2 focus:outline-none"
       />
+      <ErrorMessage errors={errors} name="answerContent" />
       <button
         type="submit"
         className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"

@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import Link from "next/link";
 import { useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import fsPromises from "fs/promises";
 import path from "path";
@@ -172,20 +172,14 @@ const Home: NextPage = (props) => {
 
       <div className="pt-10">
         <div>
-          {session ? (
+          {session && (
             <>
               <p>hi {session.user?.name}</p>
-
-              <button onClick={() => signOut()}>Logout</button>
 
               <div className="pt-6">
                 <Form questions={props.questions} />
               </div>
             </>
-          ) : (
-            <button onClick={() => signIn("discord")}>
-              Login with Discord
-            </button>
           )}
           <div className="pt-10">{<AnswerContent />}</div>
         </div>

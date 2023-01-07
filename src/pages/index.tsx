@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import { ErrorMessage } from "@hookform/error-message";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import Link from "next/link";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { api } from "../utils/api";
 
 const FormValuesSchema = z.object({
-  answerContent: z.optional(z.string().max(100)),
+  items: z.array(z.object({ answerContent: z.string() })),
 });
 
 type FormValues = z.infer<typeof FormValuesSchema>;
@@ -39,8 +39,15 @@ const Form = () => {
   const {
     register,
     handleSubmit,
+    control,
+    watch,
     formState: { errors },
-  } = useForm<FormValues>();
+  } = useForm<FormValues>({
+    mode: "onBlur",
+    defaultValues: {
+      items: [{ answerContent: "" }, { answerContent: "" }],
+    },
+  });
   const { data: session } = useSession();
   const utils = api.useContext();
   const postAnswer = api.answer.postAnswer.useMutation({
@@ -49,27 +56,50 @@ const Form = () => {
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "items",
+  });
+
+  const watchFieldArray = watch("items");
+  const controlledFields = fields.map((field, index) => {
+    return {
+      ...field,
+      ...watchFieldArray[index],
+    };
+  });
+
   return (
     <form
       className="flex gap-2"
       onSubmit={handleSubmit((input) => {
-        console.log("input2");
+        console.log("input value");
         console.log(input);
         if (session !== null) {
           postAnswer.mutate({
             name: session.user?.name as string,
-            answerContent: input.answerContent as string,
+            items: input.items,
           });
         }
       })}
     >
-      <input
-        type="text"
-        placeholder="Your answerContent..."
-        {...register("answerContent")}
-        className="rounded-md border-2 border-zinc-800 bg-neutral-900 px-4 py-2 focus:outline-none"
-      />
-      <ErrorMessage errors={errors} name="answerContent" />
+      {controlledFields.map((field, index) => {
+        return (
+          <>
+            <input
+              key={index}
+              type="text"
+              placeholder="Your answerContent..."
+              {...register(`items.${index}.answerContent`)}
+              className="rounded-md border-2 border-zinc-800 bg-neutral-900 px-4 py-2 focus:outline-none"
+            />
+            <ErrorMessage
+              errors={errors}
+              name={`items.${index}.answerContent`}
+            />
+          </>
+        );
+      })}
       <button
         type="submit"
         className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"

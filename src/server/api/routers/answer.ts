@@ -6,21 +6,23 @@ export const answerRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
-        answerContent: z.string(),
+        items: z.array(z.object({ answerContent: z.string() })),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await ctx.prisma.answer.create({
-          data: {
-            name: input.name,
-            userId: ctx.session.user.id,
-            answerContent: input.answerContent,
-          },
-        });
-      } catch (error) {
-        console.log(error);
-      }
+    .mutation(({ ctx, input }) => {
+      input.items.map(async (item) => {
+        try {
+          await ctx.prisma.answer.create({
+            data: {
+              name: input.name,
+              userId: ctx.session.user.id,
+              answerContent: item.answerContent,
+            },
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      });
     }),
   getAll: publicProcedure.query(async ({ ctx }) => {
     try {

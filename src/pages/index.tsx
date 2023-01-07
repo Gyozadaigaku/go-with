@@ -5,6 +5,7 @@ import { z } from "zod";
 import Link from "next/link";
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 import { api } from "../utils/api";
 
@@ -35,12 +36,10 @@ const AnswerContent = () => {
   );
 };
 
-const Form = () => {
+const Form = (props) => {
   const {
     register,
     handleSubmit,
-    control,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     mode: "onBlur",
@@ -55,19 +54,15 @@ const Form = () => {
       utils.answer.getAll.invalidate();
     },
   });
+  const questions = props.questions;
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "items",
-  });
+  const router = useRouter();
+  const [step, setStep] = useState(1);
 
-  const watchFieldArray = watch("items");
-  const controlledFields = fields.map((field, index) => {
-    return {
-      ...field,
-      ...watchFieldArray[index],
-    };
-  });
+  const goToStep = (step: number, asPath: string) => {
+    router.push(`/?step=${step}`, asPath);
+    setStep(step);
+  };
 
   return (
     <form
@@ -83,45 +78,63 @@ const Form = () => {
         }
       })}
     >
-      {controlledFields.map((field, index) => {
-        return (
-          <>
-            <input
-              key={index}
-              type="text"
-              placeholder="Your answerContent..."
-              {...register(`items.${index}.answerContent`)}
-              className="rounded-md border-2 border-zinc-800 bg-neutral-900 px-4 py-2 focus:outline-none"
-            />
-            <ErrorMessage
-              errors={errors}
-              name={`items.${index}.answerContent`}
-            />
-          </>
-        );
-      })}
-      <button
-        type="submit"
-        className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
-      >
-        Submit
-      </button>
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          append({
-            answerContent: "",
-          });
-        }}
-        className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
-      >
-        Add
-      </button>
+      <Image
+        src={questions[step - 1].image}
+        alt="clickable image"
+        width={200}
+        height={300}
+      />
+      <>
+        <input
+          key={step - 1}
+          type="text"
+          placeholder="Your answerContent..."
+          {...register(`items.${step - 1}.answerContent`)}
+          className="rounded-md border-2 border-zinc-800 bg-neutral-900 px-4 py-2 focus:outline-none"
+        />
+        <ErrorMessage
+          errors={errors}
+          name={`items.${step - 1}.answerContent`}
+        />
+      </>
+
+      <div className="flex">
+        {step >= 2 && (
+          <button
+            className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
+            onClick={(e) => {
+              e.preventDefault();
+              goToStep(step - 1, "/personal_info");
+            }}
+          >
+            戻る
+          </button>
+        )}
+        {step === 3 ? (
+          <button
+            className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
+            type="submit"
+            disabled={postAnswer.isLoading}
+          >
+            完了
+          </button>
+        ) : (
+          <button
+            className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
+            onClick={(e) => {
+              e.preventDefault();
+              goToStep(step + 1, "/personal_info2");
+            }}
+          >
+            次へ
+          </button>
+        )}
+      </div>
     </form>
   );
 };
 
-const Home: NextPage = () => {
+const Home: NextPage = (props) => {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
@@ -144,7 +157,7 @@ const Home: NextPage = () => {
               <button onClick={() => signOut()}>Logout</button>
 
               <div className="pt-6">
-                <Form />
+                <Form questions={props.questions} />
               </div>
             </>
           ) : (
@@ -160,3 +173,17 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+// Fetching data from the JSON file
+import fsPromises from "fs/promises";
+import path from "path";
+import { useRouter } from "next/router";
+export async function getStaticProps() {
+  const filePath = path.join(process.cwd(), "data.json");
+  const jsonData = await fsPromises.readFile(filePath);
+  const objectData = JSON.parse(jsonData);
+
+  return {
+    props: objectData,
+  };
+}

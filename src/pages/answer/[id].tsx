@@ -1,7 +1,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { api } from "../utils/api";
+import { api } from "../../utils/api";
 
 const Single = () => {
   const answerId = useRouter().query.id;

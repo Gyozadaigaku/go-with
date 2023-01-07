@@ -45,7 +45,7 @@ const Form = () => {
   } = useForm<FormValues>({
     mode: "onBlur",
     defaultValues: {
-      items: [{ answerContent: "" }, { answerContent: "" }],
+      items: [{ answerContent: "" }],
     },
   });
   const { data: session } = useSession();
@@ -105,6 +105,17 @@ const Form = () => {
         className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
       >
         Submit
+      </button>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          append({
+            answerContent: "",
+          });
+        }}
+        className="rounded-md border-2 border-zinc-800 p-2 focus:outline-none"
+      >
+        Add
       </button>
     </form>
   );

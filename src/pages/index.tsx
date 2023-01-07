@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import fsPromises from "fs/promises";
+import path from "path";
+import { useRouter } from "next/router";
 
 import { api } from "../utils/api";
 
@@ -13,7 +16,18 @@ const FormValuesSchema = z.object({
   items: z.array(z.object({ answerContent: z.string() })),
 });
 
+const QuestionDataSchema = z.object({
+  questions: z.array(
+    z.object({
+      no: z.number(),
+      content: z.string(),
+      image: z.string(),
+    })
+  ),
+});
+
 type FormValues = z.infer<typeof FormValuesSchema>;
+type QuestionData = z.infer<typeof QuestionDataSchema>;
 
 const AnswerContent = () => {
   const { data: answercontents, isLoading } = api.answer.getAll.useQuery();
@@ -175,13 +189,10 @@ const Home: NextPage = (props) => {
 export default Home;
 
 // Fetching data from the JSON file
-import fsPromises from "fs/promises";
-import path from "path";
-import { useRouter } from "next/router";
 export async function getStaticProps() {
   const filePath = path.join(process.cwd(), "data.json");
   const jsonData = await fsPromises.readFile(filePath);
-  const objectData = JSON.parse(jsonData);
+  const objectData: QuestionData = JSON.parse(jsonData.toString());
 
   return {
     props: objectData,

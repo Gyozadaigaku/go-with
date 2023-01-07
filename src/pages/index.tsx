@@ -2,6 +2,29 @@ import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 
+import { api } from "@/utils/api";
+
+const AnswerContent = () => {
+  const { data: answercontents, isLoading } = api.answer.getAll.useQuery();
+
+  if (isLoading) return <div>Fetching messages...</div>;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {answercontents?.map((msg, index) => {
+        return (
+          <div key={index} className="border p-2">
+            <Link href={`${msg.id}`}>
+              <p>{msg.answerContent}</p>
+              <span>- {msg.name}</span>
+            </Link>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
 
@@ -37,6 +60,7 @@ const Home: NextPage = () => {
             <button>回答画面</button>
           </Link>
         </div>
+        <div className="pt-10">{<AnswerContent />}</div>
       </div>
     </main>
   );

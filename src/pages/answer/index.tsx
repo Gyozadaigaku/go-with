@@ -1,8 +1,7 @@
 import { type NextPage } from "next";
 import { ErrorMessage } from "@hookform/error-message";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -29,27 +28,6 @@ const QuestionDataSchema = z.object({
 type FormValues = z.infer<typeof FormValuesSchema>;
 type QuestionData = z.infer<typeof QuestionDataSchema>;
 
-const AnswerContent = () => {
-  const { data: answercontents, isLoading } = api.answer.getAll.useQuery();
-
-  if (isLoading) return <div>Fetching messages...</div>;
-
-  return (
-    <div className="flex flex-col gap-4">
-      {answercontents?.map((msg, index) => {
-        return (
-          <div key={index} className="border p-2">
-            <Link href={`${msg.id}`}>
-              <p>{msg.answerContent}</p>
-              <span>- {msg.name}</span>
-            </Link>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 const Form = (props) => {
   const {
     register,
@@ -66,6 +44,7 @@ const Form = (props) => {
   const postAnswer = api.answer.postAnswer.useMutation({
     onSettled: () => {
       utils.answer.getAll.invalidate();
+      router.push("/");
     },
   });
   const questions = props.questions;
@@ -181,7 +160,6 @@ const Home: NextPage = (props) => {
               </div>
             </>
           )}
-          <div className="pt-10">{<AnswerContent />}</div>
         </div>
       </div>
     </main>

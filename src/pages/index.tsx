@@ -92,6 +92,14 @@ const Form = (props) => {
         }
       })}
     >
+      <div className="flex text-[#181624]">
+        <div>{`${questions[step - 1].no}. `}</div>
+        <div>
+          {questions[step - 1].content.split("\n").map((t, idx) => (
+            <div key={idx}>{t}</div>
+          ))}
+        </div>
+      </div>
       <Image
         src={questions[step - 1].image}
         alt="clickable image"
